@@ -4,7 +4,10 @@ class Solution(object):
         :type digits: str
         :rtype: List[str]
         """
-        digit_mappings = {
+        if not digits:
+            return []
+
+        mapping = {
             "2": 'abc',
             "3": 'def',
             "4": 'ghi',
@@ -15,15 +18,12 @@ class Solution(object):
             "9": 'wxyz',
         }
 
-        def get_letters(digit):
-            return [x for x in digit_mappings[digit]]
-
         def recurse(digits, ret):
             if len(digits) == 0:
                 return ret
 
             new_ret = []
-            for letter in get_letters(digits[0]):
+            for letter in mapping.get(digits[0], []):
                 for unique in ret:
                     new_ret.append(unique + letter)
 

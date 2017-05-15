@@ -45,8 +45,29 @@ class Solution2(object):
 
         return list(go('', 0, 0))
 
-print Solution().generateParenthesis(1)
-print Solution().generateParenthesis(2)
-print Solution().generateParenthesis(3)
-print Solution2().generateParenthesis(4)
-print Solution2().generateParenthesis(5)
+
+class Solution3(object):
+    def generateParenthesis(self, n):
+        """
+        :type n: int
+        :rtype: List[str]
+        """
+
+        def go(s, left, right, acc):
+            if left < n:
+                go(s+'(', left + 1, right, acc)
+
+            if left > 0 and right < left:
+                go(s+')', left, right + 1, acc)
+
+            if right == n:
+                acc.append(s)
+
+            return acc
+
+        return go('', 0, 0, [])
+
+
+print Solution3().generateParenthesis(1)
+print Solution3().generateParenthesis(2)
+print Solution3().generateParenthesis(3)

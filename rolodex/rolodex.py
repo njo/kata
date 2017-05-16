@@ -1,23 +1,35 @@
 import json
 import re
+import sys
 
-# All the CSV formats we know about
+debug = False  # toggle debug to print broken lines
+
+#  All the individual fields we care about
+last = r'(?P<lastname>[A-z]+)'
+first = r'(?P<firstname>[A-z]+(\s\w\.)?)'
+phone = r'(?P<phonenumber>.+)'
+color = r'(?P<color>[A-z ]+)'
+zipcode = r'(?P<zipcode>\d{5})'
+delim = r',\s+'
+
+#  Build the known csv formats from the fields
 patterns = map(re.compile, [
     # Lastname, Firstname, (703)-742-0996, Blue, 10013
-    r'(?P<lastname>[A-z]+),\s+(?P<firstname>[A-z]+(\s\w\.)?),\s+(?P<phonenumber>.+),\s+(?P<color>[A-z ]+),\s+(?P<zipcode>\d{5})',
+    delim.join([last, first, phone, color, zipcode + "$"]),
     # Firstname Lastname, Red, 11237, 703 955 0373
-    r'(?P<firstname>[A-z]+(\s\w\.)?)\s+(?P<lastname>[A-z]+),\s+(?P<color>[A-z ]+),\s+(?P<zipcode>\d{5}),\s+(?P<phonenumber>.+)',
+    delim.join([first + " " + last, color, zipcode, phone]),
     # Firstname, Lastname, 10013, 646 111 0101, Green
-    r'(?P<firstname>[A-z]+(\s\w\.)?),\s+(?P<lastname>[A-z]+),\s+(?P<zipcode>\d{5}),\s+(?P<phonenumber>.+),\s+(?P<color>[A-z ]+)',
+    delim.join([first, last, zipcode, phone, color])
 ])
 
 
 class Rolodex():
     """Parses and stores contact records from csv."""
 
-    errors = []     # Store the entry number of any records failed to be parsed
-    entries = []    # Correctly parsed entries (unsorted)
-    processed = 0   # Number of raw records we've processed
+    def __init__(self):  # noqa
+        self.errors = []     # Store the entry number of any records failed to be parsed
+        self.entries = []    # Correctly parsed entries (unsorted)
+        self.processed = 0   # Number of raw records we've processed
 
     def insert(self, line):
         """
@@ -33,10 +45,12 @@ class Rolodex():
                 continue
 
             phone = re.sub("[^0-9]", "", m.group("phonenumber"))
-            if len(phone) != 10:  # The instructions mention 7 digits but all the examples are 10 so I went with that
-                break
-
-            data["phonenumber"] = "{}-{}-{}".format(phone[:3], phone[3:6], phone[6:])
+            if len(phone) == 10:
+                data["phonenumber"] = "{}-{}-{}".format(phone[:3], phone[3:6], phone[6:])
+            elif len(phone) == 7:
+                data["phonenumber"] = "{}-{}".format(phone[:3], phone[3:7])
+            else:
+                break   # Invalid phone number
 
             for field in ["lastname", "firstname", "color", "zipcode"]:
                 data[field] = m.group(field)
@@ -44,6 +58,8 @@ class Rolodex():
         if data:
             self.entries.append(data)
         else:
+            if debug:
+                print >> sys.stderr, line
             self.errors.append(self.processed - 1)
 
     def export(self):
@@ -60,6 +76,12 @@ class Rolodex():
 
 
 if __name__ == "__main__":
+    """
+    Parse a csv rolodex and export the data as json to a file.
+
+    Reads either the lines from files passed as args or stdin.
+    """
+
     import fileinput
 
     rolodex = Rolodex()

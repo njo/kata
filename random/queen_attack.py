@@ -1,30 +1,12 @@
-#!/bin/python3
-
-import math
-import os
-import random
-import re
-import sys
-
-#
-# Complete the 'queensAttack' function below.
-#
-# The function is expected to return an INTEGER.
-# The function accepts following parameters:
-#  1. INTEGER n
-#  2. INTEGER k
-#  3. INTEGER r_q
-#  4. INTEGER c_q
-#  5. 2D_INTEGER_ARRAY obstacles
-#
+# https://www.hackerrank.com/challenges/queens-attack-2/problem?isFullScreen=true
 
 def queensAttack(n, k, r_q, c_q, obstacles):
     # Build the board and convert from 1 based at the bottom to 0 based up top
-    board = [[0 for _ in range(n)] for _ in range(n)]
+    board = set()
     for row, col in obstacles:
         col -= 1
         row = n - row
-        board[row][col] = 1
+        board.add((row, col))
 
     def can_see(pos, direction, total):
         # travel in the direction from current pos
@@ -34,7 +16,7 @@ def queensAttack(n, k, r_q, c_q, obstacles):
         if new_pos[1] < 0 or new_pos[1] >= n or new_pos[0] < 0 or new_pos[0] >= n:
             return total
 
-        if board[new_pos[1]][new_pos[0]] == 1:
+        if (new_pos[1], new_pos[0]) in board:
             return total
 
         return can_see(new_pos, direction, total + 1)
@@ -50,3 +32,4 @@ def queensAttack(n, k, r_q, c_q, obstacles):
 if __name__ == '__main__':
     assert queensAttack(4, 0, 4, 4, []) == 9
     assert queensAttack(8, 0, 4, 4, [(3, 5)]) == 24
+

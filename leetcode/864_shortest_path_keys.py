@@ -8,6 +8,8 @@ WALL = "#"
 EMPTY = "."
 
 class Solution:
+    least = None
+
     def shortestPathAllKeys(self, grid: List[str]) -> int:
         player = None
         keycount = 0
@@ -27,6 +29,8 @@ class Solution:
             return -1
 
         def recurse(player, visited, keys, steps):
+            if self.least and steps >= self.least:    # early exit if we won't beat the best
+                return None
             x, y = player
             # check it's a valid move
             # is it in bounds
@@ -52,24 +56,37 @@ class Solution:
 
             # check for win
             if tile in KEYS and not tile in keys:
-                keys.append(tile)
-                keys.sort()
+                keylist = [k for k in keys]
+                keylist.append(tile)
+                keys = "".join(sorted(keylist))
                 if len(keys) == keycount:
                     return steps
                 visited = set([player]) # where we found this key is the new history
 
             # try travel in the directions
             directions = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
-            results = [recurse(direction, visited.copy(), keys.copy(), steps + 1) for direction in directions]
+            results = [recurse(direction, visited.copy(), keys, steps + 1) for direction in directions]
             results = [r for r in results if r is not None]
-            if len(results) == 0:            
-                return None
-            return min(results)
+            result = None if len(results) == 0 else min(results)
+            if result:
+                self.least = min(result, self.least) if self.least else result
+            return result
 
-        result = recurse(player, set(), [], 0)
-        #print(result)
+        result = recurse(player, set(), "", 0)
         return -1 if not result else result
 
-assert Solution().shortestPathAllKeys(["@.a..","###.#","b.A.B"]) == 8
-assert Solution().shortestPathAllKeys(["@..aA","..B#.","....b"]) == 6
+assert Solution().shortestPathAllKeys(["b","A","a","@","B"]) == 3
+# assert Solution().shortestPathAllKeys([
+#     "@...a",
+#     ".###A",
+#     "b.BCc"]
+# ) == 10
+# assert Solution().shortestPathAllKeys([
+#     "@.a..",
+#     "###.#",
+#     "b.A.B"]) == 8
+assert Solution().shortestPathAllKeys([
+    "@..aA",
+    "..B#.",
+    "....b"]) == 6
 assert Solution().shortestPathAllKeys(["@Aa"]) == -1
